@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -17,15 +18,14 @@ st.set_page_config(page_title="Text Vectorization Visualizer", layout="wide")
 st.title("Text Vectorization Visualization")
 
 # Initialize spaCy
+
 @st.cache_resource
 def load_spacy_model():
     try:
-        nlp = spacy.load("en_core_web_sm")
+        return spacy.load("en_core_web_sm")
     except OSError:
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"], check=True)
-        nlp = spacy.load("en_core_web_sm")
-    return nlp
-
+        subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"], check=True)
+        return spacy.load("en_core_web_sm")
 
 nlp = load_spacy_model()
 
