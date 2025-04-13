@@ -20,10 +20,11 @@ st.title("Text Vectorization Visualization")
 def load_spacy_model():
     try:
         nlp = spacy.load("en_core_web_sm")
-    except:
-        os.system("python -m spacy download en_core_web_sm")
+    except OSError:
+        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"], check=True)
         nlp = spacy.load("en_core_web_sm")
     return nlp
+
 
 nlp = load_spacy_model()
 
