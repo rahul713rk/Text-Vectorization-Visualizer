@@ -176,16 +176,46 @@ def tokenize_text(text, method):
         return [token.text for token in doc]
 
 def animate_vectorization(method, text, params, preprocessing_params, tokenization_method):
-
     processed_text = preprocess_text(text, preprocessing_params)
     tokens = tokenize_text(processed_text, tokenization_method)
-    sentences = [sentence.strip() for sentence in processed_text.split('.') if sentence.strip()]
-    words = [word for sentence in sentences for word in sentence.split()]
-    unique_words = list(set(words))
-
+    
+    unique_words = list(set(tokens))
+    
     if method in ["Bag of Words", "N-Grams", "TF-IDF"]:
-        # ... [previous Bag of Words/N-Grams/TF-IDF code remains exactly the same] ...
-        pass
+        # Convert tokens to space-separated string for vectorizers
+        text_for_vectorization = ' '.join(tokens)
+        
+        vectorizer_params = {
+            'lowercase': False,  
+            'tokenizer': lambda x: x.split(),  # Simple split since we pre-tokenized
+            'preprocessor': None,  # Already preprocessed
+            'stop_words': None  # Already handled in tokenization
+        }
+        
+        if method == "N-Grams":
+            vectorizer_params['ngram_range'] = params["ngram_range"]
+        
+        vectorizer = CountVectorizer(**vectorizer_params) if method != "TF-IDF" else TfidfVectorizer(**vectorizer_params)
+        
+        # Fit transform expects list of documents, so we wrap in list
+        X = vectorizer.fit_transform([text_for_vectorization])
+        features = vectorizer.get_feature_names_out()
+        
+        # Visualization (single bar chart now since we're working with the whole text)
+        fig = go.Figure(data=[go.Bar(
+            x=features,
+            y=X.toarray()[0],
+            name="Token Counts"
+        )])
+        
+        fig.update_layout(
+            title=f"{method} Vectorization",
+            xaxis_title="Tokens",
+            yaxis_title="Values"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(pd.DataFrame(X.toarray(), columns=features, index=["Document"]))
 
     elif method in ["Word2Vec", "GloVe", "fastText"]:
         # Load or train word vectors
@@ -195,7 +225,7 @@ def animate_vectorization(method, text, params, preprocessing_params, tokenizati
 
         if method == "Word2Vec":
             model = Word2Vec(
-                sentences=[sentence.split() for sentence in sentences],
+                sentences=[tokens],  
                 vector_size=params["vector_size"],
                 window=params["window"],
                 min_count=params["min_count"],
